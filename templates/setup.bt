@@ -1,0 +1,9 @@
+@echo off
+echo Creating folders...
+mkdir templates 2>nul
+mkdir static 2>nul
+mkdir uploads 2>nul
+
+echo folders created successfully!
+echo Now create the HTML files in the templates folder
+pause

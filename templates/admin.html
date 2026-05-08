@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Personal Library</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container admin-container">
+        <div class="header">
+            <h1>📚 My Personal Library</h1>
+            <div class="user-info">
+                <span>Welcome, {{ username }}!</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Add Book Form -->
+        <div class="card add-book-card">
+            <h2>Add New Book</h2>
+            <form method="POST" action="{{ url_for('add_book_route') }}" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="title">Title *</label>
+                    <input type="text" id="title" name="title" required maxlength="200">
+                </div>
+                
+                <div class="form-group">
+                    <label for="author">Author *</label>
+                    <input type="text" id="author" name="author" required maxlength="100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description (optional)</label>
+                    <textarea id="description" name="description" rows="3" maxlength="1000"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="book_file">Upload Book File (PDF, EPUB, TXT, DOC, DOCX, MOBI)</label>
+                    <input type="file" id="book_file" name="book_file" accept=".pdf,.epub,.txt,.doc,.docx,.mobi">
+                </div>
+                
+                <button type="submit" class="primary">Add Book</button>
+            </form>
+        </div>
+        
+        <!-- Books List -->
+        <div class="books-section">
+            <h2>My Books ({{ books|length }})</h2>
+            
+            {% if books %}
+                <div class="books-grid">
+                    {% for book in books %}
+                        <div class="book-card">
+                            <h3>{{ book.title }}</h3>
+                            <p class="author">by {{ book.author }}</p>
+                            {% if book.description %}
+                                <p class="description">{{ book.description[:150] }}{% if book.description|length > 150 %}...{% endif %}</p>
+                            {% endif %}
+                            
+                            <div class="book-actions">
+                                <button onclick="openEditModal({{ book.id }}, '{{ book.title|e }}', '{{ book.author|e }}', '{{ book.description|e }}')" class="secondary small">Edit</button>
+                                
+                                {% if book.file_path %}
+                                    <a href="{{ url_for('download_book', book_id=book.id) }}" class="download-btn small">Download</a>
+                                {% endif %}
+                                
+                                <form method="POST" action="{{ url_for('delete_book_route', book_id=book.id) }}" style="display: inline;" onsubmit="return confirm('Delete this book?');">
+                                    <button type="submit" class="danger small">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-state">No books yet. Add your first book above!</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Book</h2>
+            <form id="editForm" method="POST">
+                <div class="form-group">
+                    <label for="edit_title">Title</label>
+                    <input type="text" id="edit_title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_author">Author</label>
+                    <input type="text" id="edit_author" name="author" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_description">Description</label>
+                    <textarea id="edit_description" name="description" rows="3"></textarea>
+                </div>
+                <button type="submit" class="primary">Update Book</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        const modal = document.getElementById('editModal');
+        const span = document.getElementsByClassName('close')[0];
+        
+        function openEditModal(id, title, author, description) {
+            document.getElementById('edit_title').value = title;
+            document.getElementById('edit_author').value = author;
+            document.getElementById('edit_description').value = description;
+            document.getElementById('editForm').action = `/update_book/${id}`;
+            modal.style.display = 'block';
+        }
+        
+        span.onclick = function() {
+            modal.style.display = 'none';
+        }
+        
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
